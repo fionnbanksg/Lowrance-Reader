@@ -1,15 +1,16 @@
 import sys
 from PyQt5.QtWidgets import (
-    QApplication, QMainWindow, QVBoxLayout, QWidget, QComboBox, QLabel, QSlider, QFileDialog, QMessageBox, QStatusBar
+    QApplication, QMainWindow, QVBoxLayout, QWidget, QComboBox, QLabel, QSlider, QFileDialog, QMessageBox, QStatusBar, QScrollArea
 )
-from PyQt5.QtCore import Qt, QTimer
+from PyQt5.QtCore import Qt
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 from matplotlib.figure import Figure
 from matplotlib.backends.backend_qt5agg import NavigationToolbar2QT as NavigationToolbar
 
 import numpy as np
 from reader import read_sl, read_bin
-import file_management  # Import the file management functions
+import file_management
+from colour_profiles.custom_colour import EK500colourmap, EK80colourmap, Hmap  # Import the custom color profiles
 
 class SLViewer(QMainWindow):
     def __init__(self):
@@ -25,17 +26,26 @@ class SLViewer(QMainWindow):
         self.setCentralWidget(self.central_widget)
         self.layout = QVBoxLayout(self.central_widget)
 
+        self.scroll_area = QScrollArea()
+        self.scroll_area.setWidgetResizable(True)
+        self.scroll_widget = QWidget()
+        self.scroll_layout = QVBoxLayout(self.scroll_widget)
+
         self.figure = Figure(figsize=(7, 7), dpi=120)
         self.canvas = FigureCanvas(self.figure)
         self.ax = self.figure.add_subplot(111)
         self.toolbar = NavigationToolbar(self.canvas, self)
-        self.layout.addWidget(self.canvas)
+        self.scroll_layout.addWidget(self.canvas)
+        self.scroll_layout.addWidget(self.toolbar)
+
+        self.scroll_area.setWidget(self.scroll_widget)
+        self.layout.addWidget(self.scroll_area)
+        
         self.canvas.mpl_connect('motion_notify_event', self.on_mouse_move)
-        self.layout.addWidget(self.toolbar)
+
         self.color_profile_combo = QComboBox()
         self.color_profile_combo.addItems([
-            "viridis", "cividis", "plasma", "magma", "inferno", "twilight", 
-            "spring", "summer", "autumn", "winter"
+            "cividis", "magma", "twilight", "EK500colourmap", "EK80colourmap", "Hmap"
         ])
         self.color_profile_combo.currentTextChanged.connect(self.update_image)
 
@@ -48,19 +58,16 @@ class SLViewer(QMainWindow):
         self.intensity_slider.setTickPosition(QSlider.TicksBelow)
         self.intensity_slider.valueChanged.connect(self.update_image)
 
-        self.layout.addWidget(self.canvas)
         self.layout.addWidget(QLabel("Color Profile:"))
         self.layout.addWidget(self.color_profile_combo)
-        self.layout.addWidget(QLabel("Intensity:"))
+        self.layout.addWidget(QLabel("Colour Map Dynamic Range:"))
         self.layout.addWidget(self.intensity_slider)
 
         self.create_menu()
-        
-        # Create a status bar
+
         self.status_bar = QStatusBar()
         self.setStatusBar(self.status_bar)
 
-        # Initialize the image display
         self.update_image()
 
     def create_menu(self):
@@ -107,11 +114,27 @@ class SLViewer(QMainWindow):
             self.ax.axis('off')
         else:
             image = self.primary_np.transpose()
-            adjusted_image = image * (self.intensity_slider.value() / 10)  # Adjust the intensity scaling
-            self.ax.imshow(adjusted_image, cmap=self.color_profile_combo.currentText(), aspect='auto', vmin=0, vmax=255)
+            
+            # Adjust the minimum value of the color scale based on the slider value
+            min_val = self.intensity_slider.value() * 5  # Example scaling factor
+            max_val = 255  # Keep the maximum value fixed
+
+            # Check if the selected colormap is custom
+            cmap_name = self.color_profile_combo.currentText()
+            if cmap_name == "EK500colourmap":
+                cmap = EK500colourmap()
+            elif cmap_name == "EK80colourmap":
+                cmap = EK80colourmap()
+            elif cmap_name == "Hmap":
+                cmap = Hmap()
+            else:
+                cmap = cmap_name
+
+            self.ax.imshow(image, cmap=cmap, aspect='auto', vmin=min_val, vmax=max_val)
             self.ax.axis('off')
         self.ax.set_position([0, 0, 1, 1])
         self.canvas.draw()
+
 
     def handle_export_sonar_data(self):
         print("Exporting sonar data...")  # Debug statement
