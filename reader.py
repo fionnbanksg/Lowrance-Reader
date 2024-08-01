@@ -70,6 +70,7 @@ def sl2_decode(data):
             position += frame_size
         else:
             position+=3240
+
     
     # Parse binary blob using NumPy custom dtype
     frame_head_np = np.frombuffer(b''.join(headers), dtype=dtype_sl2)

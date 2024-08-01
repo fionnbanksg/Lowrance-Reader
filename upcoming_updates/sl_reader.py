@@ -11,7 +11,7 @@ Credits:
 import pandas
 import numpy
 import math
-import extract_fields
+import upcoming_updates.extract_fields as extract_fields
 import pandas
 import numpy as np
 import pandas as pd

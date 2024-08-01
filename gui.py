@@ -1,6 +1,6 @@
 import sys
 from PyQt5.QtWidgets import (
-    QApplication, QMainWindow, QVBoxLayout, QWidget, QComboBox, QLabel, QSlider, QFileDialog, QMessageBox, QStatusBar, QScrollArea
+    QApplication, QMainWindow, QVBoxLayout, QWidget, QComboBox, QLabel, QSlider, QFileDialog, QStatusBar, QScrollArea
 )
 from PyQt5.QtCore import Qt
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
@@ -45,7 +45,7 @@ class SLViewer(QMainWindow):
 
         self.color_profile_combo = QComboBox()
         self.color_profile_combo.addItems([
-            "cividis", "magma", "twilight", "EK500colourmap", "EK80colourmap", "Hmap"
+            "cividis", "magma", "twilight", "EK500 Colour Map", "EK80colourmap", "Hmap"
         ])
         self.color_profile_combo.currentTextChanged.connect(self.update_image)
 
@@ -121,7 +121,7 @@ class SLViewer(QMainWindow):
 
             # Check if the selected colormap is custom
             cmap_name = self.color_profile_combo.currentText()
-            if cmap_name == "EK500colourmap":
+            if cmap_name == "EK500 Colour Map":
                 cmap = EK500colourmap()
             elif cmap_name == "EK80colourmap":
                 cmap = EK80colourmap()

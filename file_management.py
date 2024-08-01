@@ -28,6 +28,7 @@ def export_sonar_data(primary_np, parent=None):
         elif file_extension == '.csv':
             np.savetxt(file_path, primary_np.transpose(), delimiter=',', fmt='%d')
         return file_path
+
 def process_data(primary_np, parent=None):
     options = QFileDialog.Options()
     file_path, _ = QFileDialog.getSaveFileName(
