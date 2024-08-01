@@ -81,7 +81,9 @@ class SLViewer(QMainWindow):
         export_sonar_action.triggered.connect(self.handle_export_sonar_data)
         export_other_action = export_menu.addAction("Export Other Data")
         export_other_action.triggered.connect(self.handle_export_other_data)
-        process_data_action = export_menu.addAction("Process Data")
+        process_data_action = export_menu.addAction("Auto Process Data")
+        process_data_action.triggered.connect(self.handle_auto_process_data)
+        process_data_action = export_menu.addAction("Process Data With Column Selection")
         process_data_action.triggered.connect(self.handle_process_data)
 
     def open_sl_file(self):
@@ -148,9 +150,16 @@ class SLViewer(QMainWindow):
         if file_path:
             self.show_message(f"File saved at: {file_path}")
 
-    def handle_process_data(self):
+    def handle_auto_process_data(self):
         print("Processing data...")  # Debug statement
         file_path = file_management.process_data(self.primary_np, self)
+        if file_path:
+            self.show_message(f"File saved at: {file_path}")
+
+    
+    def handle_process_data(self):
+        print("Processing data...")  # Debug statement
+        file_path = file_management.process_data_with_column_selection(self.primary_np, self)
         if file_path:
             self.show_message(f"File saved at: {file_path}")
 

@@ -12,7 +12,7 @@
 # Required Libraries
 import numpy as np
 
-def processData(primary):
+def processData(primary, input_integer):
     initial_db = 0     # Initialise the starting dB value
     db_step = 3     # Decrement step for dB value in each window
     subwindow = 15     # Sub-window padding
@@ -28,11 +28,14 @@ def processData(primary):
     column_averages = np.mean(transpose, axis=0)
     # Find the index where the column average increases abruptly (more than 1.75 times the previous)
     index_to_cut = 0
-    for i in range(1, len(column_averages)):
-        if column_averages[i] > 1.75 * column_averages[i - 1]:
-            index_to_cut = i
-            print(index_to_cut)  # Debugging output to ensure correct column was selected
-            break
+    if input_integer == None:
+        for i in range(1, len(column_averages)):
+            if column_averages[i] > 1.75 * column_averages[i - 1]:
+                index_to_cut = i
+                print(index_to_cut)  # Debugging output to ensure correct column was selected
+                break
+    else:
+        index_to_cut = input_integer
 
     # Slice the transpose matrix to remove initial setup
     if index_to_cut > 0:
