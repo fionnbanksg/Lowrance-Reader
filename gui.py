@@ -76,6 +76,8 @@ class SLViewer(QMainWindow):
         open_action = file_menu.addAction("Open SL File")
         open_action.triggered.connect(self.open_sl_file)
 
+
+
         export_menu = menu_bar.addMenu("Export")
         export_sonar_action = export_menu.addAction("Export Sonar Data")
         export_sonar_action.triggered.connect(self.handle_export_sonar_data)
@@ -85,6 +87,18 @@ class SLViewer(QMainWindow):
         process_data_action.triggered.connect(self.handle_auto_process_data)
         process_data_action = export_menu.addAction("Process Data With Column Selection")
         process_data_action.triggered.connect(self.handle_process_data)
+        save_eps_action = export_menu.addAction("Save as EPS")
+        save_eps_action.triggered.connect(self.save_as_eps)
+
+    def save_as_eps(self):
+        options = QFileDialog.Options()
+        file_path, _ = QFileDialog.getSaveFileName(
+            self, "Save Plot as EPS", "", "EPS files (*.eps);;All Files (*)", options=options
+        )
+        if file_path:
+            self.figure.savefig(file_path, format='eps')
+            self.show_message(f"Figure saved as EPS at: {file_path}")
+
 
     def open_sl_file(self):
         options = QFileDialog.Options()
