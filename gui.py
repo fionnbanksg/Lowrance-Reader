@@ -23,7 +23,10 @@ class SLViewer(QMainWindow):
         self.primary_min_max = None
         self.dataframe = None
         self.df_primary = None
-
+        ("calibration\splines\spline_data_20m.mat")
+        self.calibration_data = export_calibrated_data.load_calibration_file("calibration\CALIBRATION.md")
+        spline_file = self.calibration_data.get('spline')
+        self.spline = export_calibrated_data.load_voltage_spline(spline_file)
         self.central_widget = QWidget()
         self.setCentralWidget(self.central_widget)
         self.layout = QVBoxLayout(self.central_widget)
@@ -215,7 +218,8 @@ class SLViewer(QMainWindow):
                 
                 # Only show the message if depth_at_cursor is not None (although it won't be None here)
                 if depth_at_cursor is not None:
-                    self.status_bar.showMessage(f"Row: {row}, Column: {col}, Depth at cursor: {depth_at_cursor:.3f}m")
+                    TS = export_calibrated_data.calculate_target_strength_singular(row, col, self.calibration_data, self.primary_min_max, self.primary_np, self.spline)
+                    self.status_bar.showMessage(f"Row: {row}, Column: {col}, Depth at cursor: {depth_at_cursor:.1f}m, TS at cursor: {TS:.2f}dB")
                 else:
                     self.status_bar.clearMessage()
             else:
