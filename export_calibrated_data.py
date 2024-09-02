@@ -14,7 +14,7 @@ def export_ts(primary_np, primary_min_max, parent=None):
     calibration_data = load_calibration_file(cal_file_path)
     spline = load_voltage_spline(spline_file_path)
     print(primary_min_max.transpose())
-    TS = calculate_target_strength(calibration_data, primary_min_max, primary_np, spline)
+    TS = calculate_target_strength(calibration_data, primary_min_max, primary_np)
 
     options = QFileDialog.Options()
     file_path, _ = QFileDialog.getSaveFileName(
@@ -81,8 +81,8 @@ def calculate_target_strength(calibration_data, primary_min_max, sonar_data):
     c = calibration_data.get('c')
     g = calibration_data.get('g')
     pt = calibration_data.get('pt')
-    spline = calibration_data.get('spline')
-    load_voltage_spline(spline)
+    spline_path = calibration_data.get('spline')
+    spline = load_voltage_spline(spline_path)
     v_r = spline(sonar_data)
     sonar_data = np.array(sonar_data)
 

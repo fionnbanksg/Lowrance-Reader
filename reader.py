@@ -32,7 +32,8 @@ dtype_sl3 = np.dtype([
     ("water_depth", "<f4"),
     ("x", "<i4"),
     ("y", "<i4"),
-    ("heading", "<f4")
+    ("heading", "<f4"),
+    ("frequency", "<u1")
     ])
 
 #Helper functions to convert units etc.
@@ -113,7 +114,7 @@ def sl3_decode(data):
 
     #Cut binary blob
     seen_numbers = set()
-    while (position < len(data)):
+    while (position <= len(data)):
         head = data[position:(position+header_sl3)]
         # Assuming head is the byte array containing the header data
         packet_size = int.from_bytes(head[44:44+2], "little", signed=False)  # Get the block size field
@@ -122,7 +123,7 @@ def sl3_decode(data):
         frame_size = frame_size = int.from_bytes(head[8:10], "little", signed = False)
         prev_size = int.from_bytes(head[10:10+2], "little", signed = False)
         
-        head_sub = head[0:4]+head[8:10]+head[12:14]+head[20:28]+head[48:52]+head[92:100]+head[104:108]    
+        head_sub = head[0:4]+head[8:10]+head[12:14]+head[20:28]+head[48:52]+head[92:100]+head[104:108]+head[52:53]    
         headers.append(head_sub)
         #print(frame_size)
         if(frame_size ==0):
