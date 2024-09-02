@@ -45,7 +45,7 @@ def processData(primary, input_integer, db_step, subwindow, window_size, ringing
         medians.append(median)
         std_devs.append(std_dev)
         db_values.append(db)
-        db -= db_step
+        db += db_step
 
     # Convert lists to arrays
     averages_array = np.array(averages)

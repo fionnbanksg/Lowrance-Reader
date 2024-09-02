@@ -10,4 +10,4 @@ alpha <0.0035> ##absorption coefficient (dm/m)
 c <1500> ##speed of sound in water (m/s)
 g <43.7> ##calib xdcr gain
 pt <150> ##transmission power (W)
-spline <calibration\splines\spline_data_20m.mat>
+spline <calibration/splines/spline_data_20m.mat>

@@ -89,11 +89,11 @@ def get_multiple_inputs(parent=None):
 
     integer_input = QLineEdit(dialog)
     integer_input.setText("0")
-    form_layout.addRow("Column Number for beginning of power sweep:", integer_input)
+    form_layout.addRow("Input Begin Column", integer_input)
 
     input1 = QLineEdit(dialog)
     input1.setText("0")
-    form_layout.addRow("Sweep decrementation (dB):", input1)
+    form_layout.addRow("Input increment (dB or Volts):", input1)
 
     input2 = QLineEdit(dialog)
     input2.setText("0")
@@ -101,7 +101,7 @@ def get_multiple_inputs(parent=None):
 
     input3 = QLineEdit(dialog)
     input3.setText("0")
-    form_layout.addRow("Width of power level", input3)
+    form_layout.addRow("Width of specific value (columns)", input3)
 
     input4 = QLineEdit(dialog)
     input4.setText("0")
@@ -109,7 +109,7 @@ def get_multiple_inputs(parent=None):
 
     input5 = QLineEdit(dialog)
     input5.setText("0")
-    form_layout.addRow("Initial dBm value", input5)
+    form_layout.addRow("Initial value (dB or volts)", input5)
 
     layout.addLayout(form_layout)
 
@@ -141,7 +141,7 @@ def get_multiple_inputs_auto(parent=None):
 
     input1 = QLineEdit(dialog)
     input1.setText("0")
-    form_layout.addRow("Sweep decrementation (dB):", input1)
+    form_layout.addRow("Input increment (dBm or Volts):", input1)
 
     input2 = QLineEdit(dialog)
     input2.setText("0")
@@ -149,7 +149,7 @@ def get_multiple_inputs_auto(parent=None):
 
     input3 = QLineEdit(dialog)
     input3.setText("0")
-    form_layout.addRow("Width of power level", input3)
+    form_layout.addRow("Width of specific value (columns)", input3)
 
     input4 = QLineEdit(dialog)
     input4.setText("0")
@@ -157,7 +157,7 @@ def get_multiple_inputs_auto(parent=None):
 
     input5 = QLineEdit(dialog)
     input5.setText("0")
-    form_layout.addRow("Initial dBm value", input5)
+    form_layout.addRow("Initial value (dB or volts)", input5)
 
     layout.addLayout(form_layout)
 

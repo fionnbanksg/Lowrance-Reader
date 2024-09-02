@@ -23,8 +23,8 @@ class SLViewer(QMainWindow):
         self.primary_min_max = None
         self.dataframe = None
         self.df_primary = None
-        ("calibration\splines\spline_data_20m.mat")
-        self.calibration_data = export_calibrated_data.load_calibration_file("calibration\CALIBRATION.md")
+        ("calibration/splines/spline_data_20m.mat")
+        self.calibration_data = export_calibrated_data.load_calibration_file("calibration/CALIBRATION.md")
         spline_file = self.calibration_data.get('spline')
         self.spline = export_calibrated_data.load_voltage_spline(spline_file)
         self.central_widget = QWidget()

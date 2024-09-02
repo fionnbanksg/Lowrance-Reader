@@ -7,8 +7,8 @@ import scipy.io as sio
 import math
 
 
-cal_file_path = 'calibration\CALIBRATION.md'
-spline_file_path = 'calibration\splines\spline_data_20m.mat'
+cal_file_path = 'calibration/CALIBRATION.md'
+spline_file_path = 'calibration/splines/spline_data_20m.mat'
 
 def export_ts(primary_np, primary_min_max, parent=None):
     calibration_data = load_calibration_file(cal_file_path)
