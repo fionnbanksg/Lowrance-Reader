@@ -20,6 +20,7 @@ class SLViewer(QMainWindow):
         self.setGeometry(100, 100, 800, 600)
 
         self.primary_np = None
+        self.primary_min_max = None
         self.dataframe = None
         self.df_primary = None
 
@@ -118,8 +119,18 @@ class SLViewer(QMainWindow):
                 item for f, p in zip(self.df_primary["first_byte"], self.df_primary["frame_size"])
                 if (item := np.frombuffer(sl_bin_data[(f+168):(f+(p-168))], dtype="uint8")[:2904]).size == 2904
             ]
+            print(self.df_primary)
+            min_max_list = []
+            for index, row in self.df_primary.iterrows():
+                min_max_list.append([row['min_range'], row['max_range']])
+
+            # Convert the list to a NumPy array
+            self.primary_min_max = np.array(min_max_list)
 
             self.primary_np = np.stack(primary_list)
+            
+
+
             self.update_image()
 
     def update_image(self):
@@ -163,7 +174,7 @@ class SLViewer(QMainWindow):
 
     def handle_export_sonar_data_as_ts(self):
         print("Exporting sonar data...")  # Debug statement
-        file_path = export_calibrated_data.export_ts(self.primary_np, self)
+        file_path = export_calibrated_data.export_ts(self.primary_np, self.primary_min_max, self)
         if file_path:
             self.show_message(f"File saved at: {file_path}")
 
@@ -191,9 +202,27 @@ class SLViewer(QMainWindow):
         self.status_bar.showMessage(message, 3000)  # Display message for 3 seconds
 
     def on_mouse_move(self, event):
-        if event.inaxes and event.xdata and event.ydata:
+        if event.inaxes and event.xdata is not None and event.ydata is not None:
             row, col = int(event.ydata), int(event.xdata)
-            self.status_bar.showMessage(f"Row: {row}, Column: {col}")
+            
+            # Calculate min and max for the current column (check if within bounds)
+            if self.primary_min_max is not None:
+                if 0 <= col < self.primary_min_max.shape[0]: 
+                    min_range = self.primary_min_max[col, 0]
+                    max_range = self.primary_min_max[col, 1]
+                    depth_range = max_range - min_range
+                    depth_at_cursor = row / 3072 * depth_range
+                
+                # Only show the message if depth_at_cursor is not None (although it won't be None here)
+                if depth_at_cursor is not None:
+                    self.status_bar.showMessage(f"Row: {row}, Column: {col}, Depth at cursor: {depth_at_cursor:.3f}m")
+                else:
+                    self.status_bar.clearMessage()
+            else:
+                self.status_bar.clearMessage()
+        else:
+            self.status_bar.clearMessage()
+
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)

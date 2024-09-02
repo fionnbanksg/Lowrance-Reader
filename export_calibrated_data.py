@@ -10,13 +10,11 @@ import math
 cal_file_path = 'calibration\CALIBRATION.md'
 spline_file_path = 'calibration\splines\spline_data_20m.mat'
 
-def export_ts(primary_np, parent=None):
+def export_ts(primary_np, primary_min_max, parent=None):
     calibration_data = load_calibration_file(cal_file_path)
     spline = load_voltage_spline(spline_file_path)
-    TS = calculate_target_strength(calibration_data, primary_np, spline)
-
-
-
+    print(primary_min_max.transpose())
+    TS = calculate_target_strength(calibration_data, primary_min_max, primary_np, spline)
 
     options = QFileDialog.Options()
     file_path, _ = QFileDialog.getSaveFileName(
@@ -55,7 +53,7 @@ def load_calibration_file(file_path):
     return calibration_data
 
 
-def calculate_target_strength(calibration_data, sonar_data, spline):
+def calculate_target_strength(calibration_data, primary_min_max, sonar_data, spline):
     freq = calibration_data.get('freq')
     zer = calibration_data.get('zer')
     zet = calibration_data.get('zet')
@@ -64,8 +62,27 @@ def calculate_target_strength(calibration_data, sonar_data, spline):
     g = calibration_data.get('g')
     pt = calibration_data.get('pt')
     v_r = spline(sonar_data)
+    sonar_data = np.array(sonar_data)
+    
+    rows = [] 
+    depths = []  
+
+    for i in range(sonar_data.shape[0]):  
+        row_depths = []  
+        max_range = primary_min_max[i, 0]
+        min_range = primary_min_max[i, 1]
+        recorded_range = max_range - min_range
+        max_rows = 3072
+        for j in range(sonar_data.shape[1]):  
+            depth_at_row = j / max_rows * recorded_range + min_range
+            row_depths.append(depth_at_row)  
+        rows.append(row_depths) 
+
+    range = np.array(rows)
+
+
+
     lda = c/freq
-    range = 8
     pr = ((1e-6 * v_r)/np.sqrt(2))**2 * ((zer + zet)/ zer)**2 * 1/zet
     pr_dbm = 10 * np.log10(pr * 1e3)
     pr_db_re_1w = pr_dbm - 30
