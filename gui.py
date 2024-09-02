@@ -10,6 +10,7 @@ from matplotlib.backends.backend_qt5agg import NavigationToolbar2QT as Navigatio
 import numpy as np
 from reader import read_sl, read_bin
 import file_management
+import export_calibrated_data
 from colour_profiles.custom_colour import EK500colourmap, EK80colourmap, Hmap  # Import the custom color profiles
 
 class SLViewer(QMainWindow):
@@ -89,6 +90,8 @@ class SLViewer(QMainWindow):
         process_data_action.triggered.connect(self.handle_process_data)
         save_eps_action = export_menu.addAction("Save as EPS")
         save_eps_action.triggered.connect(self.save_as_eps)
+        export_as_ts_action = export_menu.addAction("Export Sonar Data as TS")
+        export_as_ts_action.triggered.connect(self.handle_export_sonar_data_as_ts)
 
     def save_as_eps(self):
         options = QFileDialog.Options()
@@ -155,6 +158,12 @@ class SLViewer(QMainWindow):
     def handle_export_sonar_data(self):
         print("Exporting sonar data...")  # Debug statement
         file_path = file_management.export_sonar_data(self.primary_np, self)
+        if file_path:
+            self.show_message(f"File saved at: {file_path}")
+
+    def handle_export_sonar_data_as_ts(self):
+        print("Exporting sonar data...")  # Debug statement
+        file_path = export_calibrated_data.export_ts(self.primary_np, self)
         if file_path:
             self.show_message(f"File saved at: {file_path}")
 
