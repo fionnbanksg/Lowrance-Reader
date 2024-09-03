@@ -1,4 +1,6 @@
 import sys
+import math
+import numpy as np
 from PyQt5.QtWidgets import (
     QApplication, QMainWindow, QVBoxLayout, QWidget, QComboBox, QLabel, QSlider, QFileDialog, QStatusBar, QScrollArea
 )
@@ -7,11 +9,11 @@ from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 from matplotlib.figure import Figure
 from matplotlib.backends.backend_qt5agg import NavigationToolbar2QT as NavigationToolbar
 
-import numpy as np
 from reader import read_sl, read_bin
 import file_management
 import export_calibrated_data
-from colour_profiles.custom_colour import EK500colourmap, EK80colourmap, Hmap  # Import the custom color profiles
+from colour_profiles.custom_colour import EK500colourmap, EK80colourmap, Hmap  
+
 
 class SLViewer(QMainWindow):
     def __init__(self):
@@ -42,7 +44,6 @@ class SLViewer(QMainWindow):
         self.toolbar = NavigationToolbar(self.canvas, self)
         self.scroll_layout.addWidget(self.canvas)
         self.scroll_layout.addWidget(self.toolbar)
-
         self.scroll_area.setWidget(self.scroll_widget)
         self.layout.addWidget(self.scroll_area)
         
@@ -53,7 +54,6 @@ class SLViewer(QMainWindow):
             "cividis", "magma", "twilight", "EK500 Colour Map", "EK80colourmap", "Hmap"
         ])
         self.color_profile_combo.currentTextChanged.connect(self.update_image)
-
         self.intensity_slider = QSlider(Qt.Horizontal)
         self.intensity_slider.setMinimum(0)
         self.intensity_slider.setMaximum(50)
@@ -147,26 +147,21 @@ class SLViewer(QMainWindow):
             self.ax.axis('off')
         else:
             image = self.primary_np.transpose()
-            
-            # Adjust the minimum value of the color scale based on the slider value
-            min_val = self.intensity_slider.value() * 5  # Example scaling factor
-            max_val = 255  # Keep the maximum value fixed
+            min_val = self.intensity_slider.value() * 5
+            max_val = 255
 
-            # Check if the selected colormap is custom
-            cmap_name = self.color_profile_combo.currentText()
-            if cmap_name == "EK500 Colour Map":
-                cmap = EK500colourmap()
-            elif cmap_name == "EK80colourmap":
-                cmap = EK80colourmap()
-            elif cmap_name == "Hmap":
-                cmap = Hmap()
-            else:
-                cmap = cmap_name
+            cmap_dict = {
+                "EK500 Colour Map": EK500colourmap(),
+                "EK80colourmap": EK80colourmap(),
+                "Hmap": Hmap(),
+            }
+            cmap = cmap_dict.get(self.color_profile_combo.currentText(), self.color_profile_combo.currentText())
 
             self.ax.imshow(image, cmap=cmap, aspect='auto', vmin=min_val, vmax=max_val)
             self.ax.axis('off')
         self.ax.set_position([0, 0, 1, 1])
         self.canvas.draw()
+
 
 
     def handle_export_sonar_data(self):
@@ -205,27 +200,24 @@ class SLViewer(QMainWindow):
         self.status_bar.showMessage(message, 3000)  # Display message for 3 seconds
 
     def on_mouse_move(self, event):
-        if event.inaxes and event.xdata is not None and event.ydata is not None:
-            row, col = int(event.ydata), int(event.xdata)
-            
-            # Calculate min and max for the current column (check if within bounds)
-            if self.primary_min_max is not None:
-                if 0 <= col < self.primary_min_max.shape[0]: 
-                    min_range = self.primary_min_max[col, 0]
-                    max_range = self.primary_min_max[col, 1]
-                    depth_range = max_range - min_range
-                    depth_at_cursor = row / 3072 * depth_range
-                
-                # Only show the message if depth_at_cursor is not None (although it won't be None here)
-                if depth_at_cursor is not None:
-                    TS = export_calibrated_data.calculate_target_strength_singular(row, col, self.calibration_data, self.primary_min_max, self.primary_np, self.spline)
-                    self.status_bar.showMessage(f"Row: {row}, Column: {col}, Depth at cursor: {depth_at_cursor:.1f}m, TS at cursor: {TS:.2f}dB")
-                else:
-                    self.status_bar.clearMessage()
-            else:
-                self.status_bar.clearMessage()
+        if not event.inaxes or event.xdata is None or event.ydata is None:
+            self.status_bar.clearMessage()
+            return
+
+        row, col = int(event.ydata), int(event.xdata)
+
+        if self.primary_min_max is not None and 0 <= col < self.primary_min_max.shape[0]:
+            min_range, max_range = self.primary_min_max[col]
+            depth_range = max_range - min_range
+            depth_at_cursor = row / 3072 * round(depth_range)
+
+            TS = export_calibrated_data.calculate_target_strength_singular(
+                row, col, self.calibration_data, self.primary_min_max, self.primary_np, self.spline
+            )
+            self.status_bar.showMessage(f"Row: {row}, Column: {col}, Depth at cursor: {depth_at_cursor:.2f}m, TS at cursor: {TS:.2f}dB")
         else:
             self.status_bar.clearMessage()
+
 
 
 if __name__ == "__main__":

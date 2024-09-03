@@ -133,7 +133,7 @@ def calculate_target_strength_singular(row, col, calibration_data, primary_min_m
     pr_dbm = 10 * np.log10(pr * 1e3)
     pr_db_re_1w = pr_dbm - 30
 
-    TS = pr_db_re_1w + 20 * math.log10(depth) + 2 * alpha * depth - 10 * math.log10((pt*lda**2)/(16*math.pi**2)) - g
+    TS = pr_db_re_1w + 40 * math.log10(depth) + 2 * alpha * depth - 10 * math.log10((pt*lda**2)/(16*math.pi**2)) - g
     return TS
 
 
