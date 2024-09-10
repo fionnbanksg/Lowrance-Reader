@@ -50,7 +50,7 @@ class SLViewer(QMainWindow):
 
         self.color_profile_combo = QComboBox()
         self.color_profile_combo.addItems([
-            "cividis", "magma", "twilight", "EK500 Colour Map", "EK80colourmap", "Hmap"
+            "EK80colourmap", "magma", "twilight", "EK500 Colour Map", "cividis", "Hmap"
         ])
         self.color_profile_combo.currentTextChanged.connect(self.update_image)
 
@@ -74,6 +74,7 @@ class SLViewer(QMainWindow):
         self.setStatusBar(self.status_bar)
 
         self.update_image()
+        print('Successfully initialised...')
 
     def create_menu(self):
         menu_bar = self.menuBar()
@@ -113,7 +114,7 @@ class SLViewer(QMainWindow):
             self, "Open SL File", "", "SL files (*.sl3 *.sl2)", options=options
         )
         if file_path:
-            print(f"File selected: {file_path}")  # Debug statement
+            print(f"File selected: {file_path}")
             sl_bin_data = read_bin(file_path)
             df = read_sl(file_path)
             self.dataframe = df
@@ -127,7 +128,6 @@ class SLViewer(QMainWindow):
             for index, row in self.df_primary.iterrows():
                 min_max_list.append([row['min_range'], row['max_range']])
 
-            # Convert the list to a NumPy array
             self.primary_min_max = np.array(min_max_list)
 
             self.primary_np = np.stack(primary_list)
@@ -147,12 +147,9 @@ class SLViewer(QMainWindow):
             self.ax.axis('off')
         else:
             image = self.primary_np.transpose()
-            
-            # Adjust the minimum value of the color scale based on the slider value
-            min_val = self.intensity_slider.value() * 5  # Example scaling factor
-            max_val = 255  # Keep the maximum value fixed
 
-            # Check if the selected colormap is custom
+            min_val = self.intensity_slider.value() * 5 
+            max_val = 255
             cmap_name = self.color_profile_combo.currentText()
             if cmap_name == "EK500 Colour Map":
                 cmap = EK500colourmap()
@@ -171,12 +168,12 @@ class SLViewer(QMainWindow):
 
     def handle_export_sonar_data(self):
         print("Exporting sonar data...")  # Debug statement
-        file_path = file_management.export_sonar_data(self.primary_np, self)
+        file_path = file_management.export_sonar_data(self.primary_np, self.primary_min_max, self)
         if file_path:
             self.show_message(f"File saved at: {file_path}")
 
     def handle_export_sonar_data_as_ts(self):
-        print("Exporting sonar data...")  # Debug statement
+        print("Exporting TS data...")  # Debug statement
         file_path = export_calibrated_data.export_ts(self.primary_np, self.primary_min_max, self)
         if file_path:
             self.show_message(f"File saved at: {file_path}")
@@ -217,13 +214,13 @@ class SLViewer(QMainWindow):
                     depth_at_cursor = row / 3072 * depth_range
                 
                 # Only show the message if depth_at_cursor is not None (although it won't be None here)
-                if depth_at_cursor is not None:
-                    TS = export_calibrated_data.calculate_target_strength_singular(row, col, self.calibration_data, self.primary_min_max, self.primary_np, self.spline)
-                    self.status_bar.showMessage(f"Row: {row}, Column: {col}, Depth at cursor: {depth_at_cursor:.1f}m, TS at cursor: {TS:.2f}dB")
+                    if depth_at_cursor is not None:
+                        TS = export_calibrated_data.calculate_target_strength_singular(row, col, self.calibration_data, self.primary_min_max, self.primary_np, self.spline)
+                        self.status_bar.showMessage(f"Row: {row}, Column: {col}, Depth at cursor: {depth_at_cursor:.1f}m, TS at cursor: {TS:.2f}dB")
+                    else:
+                        self.status_bar.clearMessage()
                 else:
                     self.status_bar.clearMessage()
-            else:
-                self.status_bar.clearMessage()
         else:
             self.status_bar.clearMessage()
 

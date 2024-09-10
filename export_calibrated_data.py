@@ -11,22 +11,32 @@ cal_file_path = 'calibration/CALIBRATION.md'
 spline_file_path = 'calibration/splines/spline_data_20m.mat'
 
 def export_ts(primary_np, primary_min_max, parent=None):
-    calibration_data = load_calibration_file(cal_file_path)
-    spline = load_voltage_spline(spline_file_path)
-    print(primary_min_max.transpose())
-    TS = calculate_target_strength(calibration_data, primary_min_max, primary_np)
+    if primary_np is not None:
+        calibration_data = load_calibration_file(cal_file_path)
+        print(primary_min_max.transpose())
+        TS = calculate_target_strength(calibration_data, primary_min_max, primary_np)
+        min_value = primary_min_max[0,0]
+        max_value = primary_min_max[0, 1]
+        depths = []
+        depth_range = max_value - min_value
+        max_rows = 3072
+        for i in range(1, primary_np.shape[1]+1):
+            depth = i / max_rows * depth_range
+            depths.append(depth)
 
-    options = QFileDialog.Options()
-    file_path, _ = QFileDialog.getSaveFileName(
-        parent, "Export Sonar Data", "", "CSV Files (*.csv);;Text Files (*.txt)", options=options
-    )
-    if file_path:
-        file_extension = os.path.splitext(file_path)[1]
-        if file_extension == '.txt':
-            np.savetxt(file_path, TS.transpose(), delimiter='\t', fmt='%f')
-        elif file_extension == '.csv':
-            np.savetxt(file_path, TS.transpose(), delimiter=',', fmt='%f')
-        return file_path
+        depths = np.array(depths).reshape(-1, 1)
+        TS_with_depths = np.hstack((depths, TS.transpose()))
+        options = QFileDialog.Options()
+        file_path, _ = QFileDialog.getSaveFileName(
+            parent, "Export Sonar Data", "", "CSV Files (*.csv);;Text Files (*.txt)", options=options
+        )
+        if file_path:
+            file_extension = os.path.splitext(file_path)[1]
+            if file_extension == '.txt':
+                np.savetxt(file_path, TS_with_depths, delimiter='\t', fmt='%.3f')
+            elif file_extension == '.csv':
+                np.savetxt(file_path, TS_with_depths, delimiter=',', fmt='%.3f')
+            return file_path
     
 
 def process_ts(row, column, primary_np, primary_min_max, parent=None):
@@ -130,10 +140,8 @@ def calculate_target_strength_singular(row, col, calibration_data, primary_min_m
     voltage = spline(val)
     lda = c/freq
     pr = ((1e-6 * voltage)/np.sqrt(2))**2 * ((zer + zet)/ zer)**2 * 1/zet
-    pr_dbm = 10 * np.log10(pr * 1e3)
-    pr_db_re_1w = pr_dbm - 30
-
-    TS = pr_db_re_1w + 20 * math.log10(depth) + 2 * alpha * depth - 10 * math.log10((pt*lda**2)/(16*math.pi**2)) - g
+    
+    TS = 10*math.log10(pr)  + 2 * alpha * depth - 10 * math.log10((pt*lda**2*g**2)/(16*math.pi**2)) #omitted 40log(r) term due to lowrance already including tvg
     return TS
 
 

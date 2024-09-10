@@ -4,81 +4,96 @@ import numpy as np
 import os
 
 def export_other_data(dataframe, parent=None):
-    options = QFileDialog.Options()
-    file_path, _ = QFileDialog.getSaveFileName(
-        parent, "Export Other Data", "", "CSV Files (*.csv);;Text Files (*.txt)", options=options
-    )
-    if file_path:
-        file_extension = os.path.splitext(file_path)[1]
-        if file_extension == '.txt':
-            dataframe.to_csv(file_path, sep='\t', index=False)
-        elif file_extension == '.csv':
-            dataframe.to_csv(file_path, sep=',', index=False)
-        return file_path
-
-def export_sonar_data(primary_np, parent=None):
-    options = QFileDialog.Options()
-    file_path, _ = QFileDialog.getSaveFileName(
-        parent, "Export Sonar Data", "", "CSV Files (*.csv);;Text Files (*.txt)", options=options
-    )
-    if file_path:
-        file_extension = os.path.splitext(file_path)[1]
-        if file_extension == '.txt':
-            np.savetxt(file_path, primary_np.transpose(), delimiter='\t', fmt='%d')
-        elif file_extension == '.csv':
-            np.savetxt(file_path, primary_np.transpose(), delimiter=',', fmt='%d')
-        return file_path
-
-def process_data(primary_np, parent=None):
-    inputs = get_multiple_inputs_auto(parent)
-    if inputs is not None:
-        input1, input2, input3, input4, input5 = inputs
-
+    if dataframe is not None:
         options = QFileDialog.Options()
         file_path, _ = QFileDialog.getSaveFileName(
-            parent, "Process Data", "", "CSV Files (*.csv);;Text Files (*.txt)", options=options
+            parent, "Export Other Data", "", "CSV Files (*.csv);;Text Files (*.txt)", options=options
         )
-        
         if file_path:
-            try:
-                # Process the data with the integer values
-                data = processData.processData(primary_np, None, input1, input2, input3, input4, input5)
-                
-                file_extension = os.path.splitext(file_path)[1]
-                if file_extension == '.txt':
-                    np.savetxt(file_path, data.transpose(), delimiter='\t', fmt='%f')
-                elif file_extension == '.csv':
-                    np.savetxt(file_path, data.transpose(), delimiter=',', fmt='%f')
-                return file_path
-            except Exception as e:
-                print(f"Error processing data: {e}")
-                return None
+            file_extension = os.path.splitext(file_path)[1]
+            if file_extension == '.txt':
+                dataframe.to_csv(file_path, sep='\t', index=False)
+            elif file_extension == '.csv':
+                dataframe.to_csv(file_path, sep=',', index=False)
+            return file_path
+
+def export_sonar_data(primary_np, primary_min_max, parent=None):
+    if primary_np is not None:
+        min_value = primary_min_max[0,0]
+        max_value = primary_min_max[0, 1]
+        depths = []
+        depth_range = max_value - min_value
+        max_rows = 3072
+        for i in range(1, primary_np.shape[1]+1):
+            depth = i / max_rows * depth_range
+            depths.append(depth)
+
+        depths = np.array(depths).reshape(-1, 1)
+        primary_np_with_depths = np.hstack((depths, primary_np.transpose()))
+        options = QFileDialog.Options()
+        file_path, _ = QFileDialog.getSaveFileName(
+            parent, "Export Sonar Data", "", "CSV Files (*.csv);;Text Files (*.txt)", options=options
+        )
+        if file_path:
+            file_extension = os.path.splitext(file_path)[1]
+            if file_extension == '.txt':
+                np.savetxt(file_path, primary_np_with_depths, delimiter='\t', fmt='%.2f')
+            elif file_extension == '.csv':
+                np.savetxt(file_path, primary_np_with_depths, delimiter=',', fmt='%.2f')
+            return file_path
+
+def process_data(primary_np, parent=None):
+    if primary_np is not None:
+        inputs = get_multiple_inputs_auto(parent)
+        if inputs is not None:
+            input1, input2, input3, input4, input5 = inputs
+
+            options = QFileDialog.Options()
+            file_path, _ = QFileDialog.getSaveFileName(
+                parent, "Process Data", "", "CSV Files (*.csv);;Text Files (*.txt)", options=options
+            )
+            
+            if file_path:
+                try:
+                    # Process the data with the integer values
+                    data = processData.processData(primary_np, None, input1, input2, input3, input4, input5)
+                    
+                    file_extension = os.path.splitext(file_path)[1]
+                    if file_extension == '.txt':
+                        np.savetxt(file_path, data.transpose(), delimiter='\t', fmt='%f')
+                    elif file_extension == '.csv':
+                        np.savetxt(file_path, data.transpose(), delimiter=',', fmt='%f')
+                    return file_path
+                except Exception as e:
+                    print(f"Error processing data: {e}")
+                    return None
 
 
 def process_data_with_column_selection(primary_np, parent=None):
-    inputs = get_multiple_inputs(parent)
-    if inputs is not None:
-        integer, input1, input2, input3, input4, input5 = inputs
+    if primary_np is not None:
+        inputs = get_multiple_inputs(parent)
+        if inputs is not None:
+            integer, input1, input2, input3, input4, input5 = inputs
 
-        options = QFileDialog.Options()
-        file_path, _ = QFileDialog.getSaveFileName(
-            parent, "Process Data", "", "CSV Files (*.csv);;Text Files (*.txt)", options=options
-        )
-        
-        if file_path:
-            try:
-                # Process the data with the integer values
-                data = processData.processData(primary_np, integer, input1, input2, input3, input4, input5)
-                
-                file_extension = os.path.splitext(file_path)[1]
-                if file_extension == '.txt':
-                    np.savetxt(file_path, data.transpose(), delimiter='\t', fmt='%f')
-                elif file_extension == '.csv':
-                    np.savetxt(file_path, data.transpose(), delimiter=',', fmt='%f')
-                return file_path
-            except Exception as e:
-                print(f"Error processing data: {e}")
-                return None
+            options = QFileDialog.Options()
+            file_path, _ = QFileDialog.getSaveFileName(
+                parent, "Process Data", "", "CSV Files (*.csv);;Text Files (*.txt)", options=options
+            )
+            
+            if file_path:
+                try:
+                    # Process the data with the integer values
+                    data = processData.processData(primary_np, integer, input1, input2, input3, input4, input5)
+                    
+                    file_extension = os.path.splitext(file_path)[1]
+                    if file_extension == '.txt':
+                        np.savetxt(file_path, data.transpose(), delimiter='\t', fmt='%f')
+                    elif file_extension == '.csv':
+                        np.savetxt(file_path, data.transpose(), delimiter=',', fmt='%f')
+                    return file_path
+                except Exception as e:
+                    print(f"Error processing data: {e}")
+                    return None
 
 def get_multiple_inputs(parent=None):
     dialog = QDialog(parent)
