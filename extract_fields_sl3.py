@@ -1,4 +1,5 @@
 import numpy as np
+#based off data provided in https://github.com/opensounder/sounder-log-formats/blob/master/lowrance/format-3.md
 
 sl3_dtype = np.dtype([
     ('frame_offset', 'uint32'),                                  

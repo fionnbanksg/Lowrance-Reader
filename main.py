@@ -8,17 +8,17 @@ from matplotlib.figure import Figure
 from matplotlib.backends.backend_qt5agg import NavigationToolbar2QT as NavigationToolbar
 
 import numpy as np
-from reader import read_sl, read_bin
+from file_reader import read_sl, read_bin
 import file_management
 import export_calibrated_data
-from colour_profiles.custom_colour import EK500colourmap, EK80colourmap, Hmap  # Import the custom color profiles
+from colour_profiles.custom_colour import EK500colourmap, EK80colourmap, Hmap
+import os as os
 
 class SLViewer(QMainWindow):
     def __init__(self):
         super().__init__()
         self.setWindowTitle("Lowrance SL File Reader")
         self.setGeometry(100, 100, 800, 600)
-
         self.primary_np = None
         self.primary_min_max = None
         self.dataframe = None
@@ -30,30 +30,24 @@ class SLViewer(QMainWindow):
         self.central_widget = QWidget()
         self.setCentralWidget(self.central_widget)
         self.layout = QVBoxLayout(self.central_widget)
-
         self.scroll_area = QScrollArea()
         self.scroll_area.setWidgetResizable(True)
         self.scroll_widget = QWidget()
         self.scroll_layout = QVBoxLayout(self.scroll_widget)
-
         self.figure = Figure(figsize=(7, 7), dpi=120)
         self.canvas = FigureCanvas(self.figure)
         self.ax = self.figure.add_subplot(111)
         self.toolbar = NavigationToolbar(self.canvas, self)
         self.scroll_layout.addWidget(self.canvas)
         self.scroll_layout.addWidget(self.toolbar)
-
         self.scroll_area.setWidget(self.scroll_widget)
         self.layout.addWidget(self.scroll_area)
-        
         self.canvas.mpl_connect('motion_notify_event', self.on_mouse_move)
-
         self.color_profile_combo = QComboBox()
         self.color_profile_combo.addItems([
             "EK80colourmap", "magma", "twilight", "EK500 Colour Map", "cividis", "Hmap"
         ])
         self.color_profile_combo.currentTextChanged.connect(self.update_image)
-
         self.intensity_slider = QSlider(Qt.Horizontal)
         self.intensity_slider.setMinimum(0)
         self.intensity_slider.setMaximum(50)
@@ -62,17 +56,13 @@ class SLViewer(QMainWindow):
         self.intensity_slider.setTickInterval(1)
         self.intensity_slider.setTickPosition(QSlider.TicksBelow)
         self.intensity_slider.valueChanged.connect(self.update_image)
-
         self.layout.addWidget(QLabel("Color Profile:"))
         self.layout.addWidget(self.color_profile_combo)
         self.layout.addWidget(QLabel("Colour Map Dynamic Range:"))
         self.layout.addWidget(self.intensity_slider)
-
         self.create_menu()
-
         self.status_bar = QStatusBar()
         self.setStatusBar(self.status_bar)
-
         self.update_image()
         print('Successfully initialised...')
 
@@ -81,9 +71,6 @@ class SLViewer(QMainWindow):
         file_menu = menu_bar.addMenu("File")
         open_action = file_menu.addAction("Open SL File")
         open_action.triggered.connect(self.open_sl_file)
-
-
-
         export_menu = menu_bar.addMenu("Export")
         export_sonar_action = export_menu.addAction("Export Sonar Data")
         export_sonar_action.triggered.connect(self.handle_export_sonar_data)
@@ -114,27 +101,38 @@ class SLViewer(QMainWindow):
             self, "Open SL File", "", "SL files (*.sl3 *.sl2)", options=options
         )
         if file_path:
-            print(f"File selected: {file_path}")
-            sl_bin_data = read_bin(file_path)
-            df = read_sl(file_path)
-            self.dataframe = df
-            self.df_primary = df.query("survey_label == 'primary'")
-            primary_list = [
-                item for f, p in zip(self.df_primary["first_byte"], self.df_primary["frame_size"])
-                if (item := np.frombuffer(sl_bin_data[(f+168):(f+(p-168))], dtype="uint8")[:2904]).size == 2904
-            ]
-            print(self.df_primary)
-            min_max_list = []
-            for index, row in self.df_primary.iterrows():
-                min_max_list.append([row['min_range'], row['max_range']])
+                print(f"File selected: {file_path}")
+                sl_bin_data = read_bin(file_path)
+                df = read_sl(file_path)
+                self.dataframe = df
+                self.df_primary = df.query("survey_label == 'primary'")
+                _, file_extension = os.path.splitext(file_path)
 
-            self.primary_min_max = np.array(min_max_list)
+                if file_extension == '.sl3':
+                    print("Processing .sl3 file")
+                    primary_list = [
+                        item for f, p in zip(self.df_primary["frame_offset"], self.df_primary["blocksize"])
+                        if (item := np.frombuffer(sl_bin_data[(f+168):(f+(p-168))], dtype="uint8")[:2904]).size == 2904
+                    ]
+                elif file_extension == '.sl2':
+                    print("Processing .sl2 file")
+                    primary_list = [
+                        item for f, p in zip(self.df_primary["frame_offset"], self.df_primary["blocksize"])
+                        if (item := np.frombuffer(sl_bin_data[(f+144):(f+(p-144))], dtype="uint8")[:2904]).size == 2904
+                    ]
+                else:
+                    print("Unsupported file format")
+        min_max_list = []
+        for index, row in self.df_primary.iterrows():
+            min_max_list.append([row['upper_limit'], row['lower_limit']])
 
-            self.primary_np = np.stack(primary_list)
-            
+        self.primary_min_max = np.array(min_max_list)
+
+        self.primary_np = np.stack(primary_list)
+        
 
 
-            self.update_image()
+        self.update_image()
 
     def update_image(self):
         self.ax.clear()
@@ -167,39 +165,39 @@ class SLViewer(QMainWindow):
 
 
     def handle_export_sonar_data(self):
-        print("Exporting sonar data...")  # Debug statement
+        print("Exporting sonar data...")
         file_path = file_management.export_sonar_data(self.primary_np, self.primary_min_max, self)
         if file_path:
             self.show_message(f"File saved at: {file_path}")
 
     def handle_export_sonar_data_as_ts(self):
-        print("Exporting TS data...")  # Debug statement
+        print("Exporting TS data...")
         file_path = export_calibrated_data.export_ts(self.primary_np, self.primary_min_max, self)
         if file_path:
             self.show_message(f"File saved at: {file_path}")
 
     def handle_export_other_data(self):
-        print("Exporting other data...")  # Debug statement
+        print("Exporting other data...")
         file_path = file_management.export_other_data(self.dataframe, self)
         if file_path:
             self.show_message(f"File saved at: {file_path}")
 
     def handle_auto_process_data(self):
-        print("Processing data...")  # Debug statement
+        print("Processing data...")
         file_path = file_management.process_data(self.primary_np, self)
         if file_path:
             self.show_message(f"File saved at: {file_path}")
 
     
     def handle_process_data(self):
-        print("Processing data...")  # Debug statement
+        print("Processing data...") 
         file_path = file_management.process_data_with_column_selection(self.primary_np, self)
         if file_path:
             self.show_message(f"File saved at: {file_path}")
 
     def show_message(self, message):
-        print(f"Showing message: {message}")  # Debug statement
-        self.status_bar.showMessage(message, 3000)  # Display message for 3 seconds
+        print(f"Showing message: {message}") 
+        self.status_bar.showMessage(message, 3000)
 
     def on_mouse_move(self, event):
         if event.inaxes and event.xdata is not None and event.ydata is not None:
