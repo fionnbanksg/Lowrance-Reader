@@ -1,4 +1,4 @@
-#This file is an improvised version of Keneth 
+#This file is an improvised version of Keneth M
 import numpy as np
 import pandas as pd
 import math
@@ -47,10 +47,9 @@ def y2lat(y):
 
 #Funtion for reading binary data into memory
 def read_bin(path):
-
     with open(path, "rb") as f:
         data = f.read()
-        
+
     return(data)
 
 

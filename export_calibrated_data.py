@@ -64,19 +64,18 @@ def load_calibration_file(file_path):
     with open(file_path, 'r') as file:
         for line in file:
             line = line.strip()
-            if line.startswith("%%") or not line:  # Skip comments and empty lines
+            if line.startswith("%%") or not line:  
                 continue
             if '<' in line and '>' in line:
                 key, value = line.split('<')
                 key = key.strip()
                 value = value.split('>')[0].strip()
                 
-                # Try to convert the value to a float if possible
+                
                 try:
                     value = float(value.replace('e', 'E'))
                 except ValueError:
-                    pass  # Keep the value as a string if it can't be converted to a float
-                
+                    pass
                 calibration_data[key] = value
     
     return calibration_data
@@ -150,14 +149,11 @@ def calculate_target_strength_singular(row, col, calibration_data, primary_min_m
 def load_voltage_spline(spline_filepath):
     data = sio.loadmat(spline_filepath)
     pp_inverse = data['pp_inverse']
-
     coefficients = pp_inverse['coefs'][0, 0] 
     breaks = pp_inverse['breaks'][0, 0][0]
-
-
     if coefficients.shape[0] != len(breaks) - 1:
         coefficients = coefficients.T
 
-    assert coefficients.shape[0] == len(breaks) - 1, "Number of coefficients does not match number of segments."
+    assert coefficients.shape[0] == len(breaks) - 1, "Error: number of coefficients not equal to number of segments."
     inverse_spline = PPoly(coefficients.T, breaks)
     return inverse_spline
