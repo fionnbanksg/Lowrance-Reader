@@ -70,8 +70,6 @@ def load_calibration_file(file_path):
                 key, value = line.split('<')
                 key = key.strip()
                 value = value.split('>')[0].strip()
-                
-                
                 try:
                     value = float(value.replace('e', 'E'))
                 except ValueError:
@@ -138,8 +136,11 @@ def calculate_target_strength_singular(row, col, calibration_data, primary_min_m
     val = sonar_data[col, row]
     voltage = spline(val)
     lda = c/freq
-    pr = ((1e-6 * voltage)/np.sqrt(2))**2 * ((zer + zet)/ zer)**2 * 1/zet
-    
+    voltage = 5e-3*3
+    voltage = 0.177098 *math.exp(0.0645578 *val)*1e-6*3.33
+    voltage = 0.154476 *math.exp(0.0654347 * val)*1e-6*3.33 #40m
+    pr = (( voltage)/np.sqrt(2))**2 * ((zer + zet)/ zer)**2 * 1/zet
+
     TS = 10*math.log10(pr)  + 2 * alpha * depth - 10 * math.log10((pt*lda**2*g**2)/(16*math.pi**2)) #omitted 40log(r) term due to lowrance already including tvg
     return TS
 

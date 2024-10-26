@@ -32,14 +32,14 @@ def y2lat(y):
 
 
 def sl3_decode(data):
-    position = file_header_sl3
+    position = 0
     headers = []
 
     while (position <= len(data)):
         head = data[position:(position+header_sl3)]
         packet_size = int.from_bytes(head[44:44+2], "little", signed=False) 
         frame_size_alt = packet_size+header_sl3
-        frame_size = frame_size = int.from_bytes(head[8:10], "little", signed = False)
+        frame_size = int.from_bytes(head[8:10], "little", signed = False)
         prev_size = int.from_bytes(head[10:10+2], "little", signed = False)
         head_sub = extract_fields_sl3.extract_fields_sl3(head)    
         headers.append(head_sub)

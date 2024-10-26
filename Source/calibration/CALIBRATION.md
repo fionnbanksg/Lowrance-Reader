@@ -8,6 +8,6 @@ zer <180> ##receiver impedance (ohm)
 zet <2500> ##transducer equiv impedance (ohm)
 alpha <0.0035> ##absorption coefficient (dm/m)
 c <1500> ##speed of sound in water (m/s)
-g <20.1> ##calib xdcr gain
+g <15.42> ##calib xdcr gain
 pt <300> ##transmission power (W)
 spline <calibration/splines/spline_data_20m.mat>
